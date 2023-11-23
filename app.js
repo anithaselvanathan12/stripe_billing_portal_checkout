@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
-const stripe = require('stripe')('sk_test_51HH8CjBqbRJuVF9Mxhq7Sd01CZKTkfOOtzpkMQdhd59OwG1YMBlpLBrwZfB0yLpPDr10geaAjSIblUR3FemTuCNm00bHtTri8k', {
+const { STRIPE_KEY, CUSTOMER_ID, PLAN_ID  } = require('./constant')
+const stripe = require('stripe')(STRIPE_KEY, {
     maxNetworkRetries: 3,
   });
 const port = process.env.PORT || "8000";
@@ -12,7 +13,7 @@ app.get("/", (req, res) => {
 app.get("/billing_session_url", async (req, res) => {
     try {
         const session = await stripe.billingPortal.sessions.create({
-          customer: 'cus_HxAD5GEYwf8VJL',
+          customer: CUSTOMER_ID,
           return_url: 'http://localhost:4200/payment',
         });
         if (session) {
@@ -30,7 +31,7 @@ app.get("/billing_session_url", async (req, res) => {
 app.get("/checkout", async (req, res) => {
     try {
         const paymentMethods = await stripe.paymentMethods.list({
-          customer: 'cus_HxAD5GEYwf8VJL',
+          customer: CUSTOMER_ID,
           type: 'card',
         });
         const session = await stripe.checkout.sessions.create({
@@ -38,12 +39,12 @@ app.get("/checkout", async (req, res) => {
           mode: 'subscription',
           line_items: [
             {
-              price: 'plan_HwlLiitCcP2osC',
+              price: PLAN_ID,
               quantity: 1,
             },
           ],
-          customer: 'cus_HxAD5GEYwf8VJL',
-          success_url: 'http://localhost:4200/plans?customerId=cus_HxAD5GEYwf8VJL',
+          customer: CUSTOMER_ID,
+          success_url: `http://localhost:4200/plans?customerId=${CUSTOMER_ID}`,
           cancel_url: 'http://localhost:4200/plans',
         });
         res.send({
